@@ -63,6 +63,31 @@ def make_cutout(current_tile_center,relevant_fields):
 
     return(all_cutouts)
 
+def make_weightmap_cutout(current_tile_center,relevant_fields):
+    tile_side_degs = 0.7  # in degrees
+    tile_side_pixels = tile_side_degs*60*60/2.5 * u.pixel
+
+    all_weightmap_cutout = []
+    for i in range(len(relevant_fields)):
+        field = relevant_fields[i].decode('utf-8')
+        fits_file_name = datadir+'raw/'+str(field)+'/CoaddsByFilter/coadd_SloanG_'+str(field)+'_weightmap.fits'
+    
+        'load the image'        
+        hdu = fits.open(fits_file_name)[0]
+        data = hdu.data
+        wcs = WCS(hdu.header)
+            
+        'convert tile center to pixel coordinates'
+        w = WCS(fits_file_name)
+        tile_center_pix = w.wcs_world2pix(current_tile_center[0] , current_tile_center[1] ,1)
+        position = (tile_center_pix[0], tile_center_pix[1])
+        size = tile_side_pixels
+        cutout = Cutout2D(data, position, size, wcs=wcs)
+        all_weightmap_cutout.append(cutout)
+
+    return(all_weightmap_cutout)
+
+
 def make_hdu_list(all_cutouts):
     hdu_list = []
     for i in range(len(all_cutouts)):
@@ -73,6 +98,18 @@ def make_hdu_list(all_cutouts):
 
     return hdu_list
 
+
+def make_weightmap_hdu_list(all_weightmap_cutout):
+    hdu_list = []
+    for i in range(len(all_weightmap_cutout)):
+        hdu = fits.PrimaryHDU()
+        hdu.data = all_cutouts[i].data
+        hdu.header.update(all_cutouts[i].wcs.to_header())
+        hdu_list.append(hdu)
+
+    return hdu_list
+
+
 def save_tile_fits(cutout_data, cutout_wcs, current_tile_center):
     hdu = fits.PrimaryHDU()
     hdu.data = cutout_data
@@ -80,11 +117,12 @@ def save_tile_fits(cutout_data, cutout_wcs, current_tile_center):
     cutout_filename = 'tile_'+str(current_tile_center[0])+'_'+str(current_tile_center[1])+'.fits'
     hdu.writeto(tilesdir+cutout_filename, overwrite=True)
 
-def reproject(hdu_list):
+def reproject(hdu_list, input_weights):
 
     wcs_out, shape_out = find_optimal_celestial_wcs(hdu_list)
     array, footprint = reproject_and_coadd(hdu_list, output_projection=wcs_out,
-                                       shape_out=shape_out, reproject_function=reproject_exact)
+                                       shape_out=shape_out, input_weights=input_weights, 
+                                       reproject_function=reproject_exact)
     return(array, wcs_out)
 
 
@@ -99,14 +137,16 @@ if __name__ == "__main__":
             relevant_fields = spot_images(current_tile_center)
             'get their cutouts'
             all_cutouts = make_cutout(current_tile_center, relevant_fields)
+            all_weightmap_cutout = make_weightmap_cutout(current_tile_center, relevant_fields)
 
             hdu_list = make_hdu_list(all_cutouts)
+            input_weights = make_weightmap_hdu_list(all_weightmap_cutout)
 
             'reproject and combine + save into a fits file'
             if len(all_cutouts)<2:
                 cutout = all_cutouts[0]
                 save_tile_fits(cutout.data, cutout.wcs, current_tile_center)
             else:
-                cutout_data, cutout_wcs = reproject(hdu_list)
+                cutout_data, cutout_wcs = reproject(hdu_list, input_weights)
                 save_tile_fits(cutout_data, cutout_wcs, current_tile_center)
 
