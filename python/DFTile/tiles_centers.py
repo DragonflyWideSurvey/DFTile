@@ -14,45 +14,57 @@ from reproject import reproject_interp
 from reproject.mosaicking import reproject_and_coadd
 from reproject.mosaicking import find_optimal_celestial_wcs
 
-
-
 datadir = '/Users/shanydanieli/projects/dwfs/data/'
-
-def function():
-    pass
 
 
 if __name__ == "__main__":
 
-    field_list = os.listdir(datadir)
+    # lower left corner: G09_130.5_m1
+    # upper left corner G09_130.5_1
+    # lower right corner: G15_222_m1
+    # upper right corner: G15_222_1
 
-    '''
-    G15_222 - has two consecutive fields in the declination 
-    '''
+    # get the lower left corner pixel
+    image1 = datadir+'df_coadds/G09_130.5_m1/CoaddsByFilter/coadd_SloanG_G09_130.5_m1.fits'
+    hdu1 = fits.open(image1)
+    data1 = hdu1[0].data
+    wcs1 = wcs.WCS(image1)
+    # lowerleft_pix = [0, 0]
+    lowerright_pix = [data1.shape[1], 0]
+    lowerright_coor = wcs1.wcs_pix2world(lowerright_pix[0],lowerright_pix[1], 1)
 
-    G15_222_m1_G_fits = datadir+'raw/G15_222_m1/CoaddsByFilter/coadd_SloanG_G15_222_m1.fits'
-    G15_222_1_G_fits = datadir+'raw/G15_222_1/CoaddsByFilter/coadd_SloanG_G15_222_1.fits'
+    # get the upper left corner pixel
+    image2 = datadir+'df_coadds/G09_130.5_1/CoaddsByFilter/coadd_SloanG_G09_130.5_1.fits'
+    hdu2 = fits.open(image2)
+    data2 = hdu2[0].data
+    wcs2 = wcs.WCS(image2)
+    # upperleft_pix = [0, data2.shape[0]]
+    upperright_pix = [data2.shape[1], data2.shape[0]]
+    upperright_coor = wcs2.wcs_pix2world(upperright_pix[0],upperright_pix[1], 1)
 
-    hdu_G15_222_m1 = fits.open(G15_222_m1_G_fits)
-    data_G15_222_m1 = hdu_G15_222_m1[0].data
-
-    hdu_G15_222_1 = fits.open(G15_222_1_G_fits)
-    data_G15_222_1 = hdu_G15_222_1[0].data
-
-
+    # get the lower right corner pixel
+    image3 = datadir+'df_coadds/G15_222_m1/CoaddsByFilter/coadd_SloanG_G15_222_m1.fits'
+    hdu3 = fits.open(image3)
+    data3 = hdu3[0].data
+    wcs3 = wcs.WCS(image3)
+    # lowerright_pix = [data3.shape[1], 0]
     lowerleft_pix = [0, 0]
-    upperleft_pix = [0, data_G15_222_1.shape[0]]
-    lowerright_pix = [data_G15_222_m1.shape[1], 0]
-    upperright_pix = [data_G15_222_1.shape[1], data_G15_222_1.shape[0]]
+    lowerleft_coor = wcs3.wcs_pix2world(lowerleft_pix[0],lowerleft_pix[1], 1)
 
-    w_G15_222_m1 = wcs.WCS(G15_222_m1_G_fits)
-    w_G15_222_1 = wcs.WCS(G15_222_1_G_fits)
+    # get the upper right corner pixel
+    image4 = datadir+'df_coadds/G15_222_1/CoaddsByFilter/coadd_SloanG_G15_222_1.fits'
+    hdu4 = fits.open(image4)
+    data4 = hdu4[0].data
+    wcs4 = wcs.WCS(image4)
+    # upperright_pix = [data4.shape[1], data4.shape[0]]
+    upperleft_pix = [0, data4.shape[0]]
+    upperleft_coor = wcs4.wcs_pix2world(upperleft_pix[0],upperleft_pix[1], 1)
 
-    lowerleft_coor = w_G15_222_m1.wcs_pix2world(lowerleft_pix[0],lowerleft_pix[1], 1)
-    upperleft_coor = w_G15_222_1.wcs_pix2world(upperleft_pix[0],upperleft_pix[1], 1)
-    lowerright_coor = w_G15_222_m1.wcs_pix2world(lowerright_pix[0],lowerright_pix[1], 1)
-    upperright_coor = w_G15_222_1.wcs_pix2world(upperright_pix[0],upperright_pix[1], 1)
-
+    # GAMA
+    lowerleft_coor = np.array([223.9,-2.45])
+    upperleft_coor = np.array([223.9,2.45])
+    lowerright_coor = np.array([128.5,-2.45])
+    upperright_coor = np.array([128.5,2.45])
 
     current_center_x = lowerleft_coor[0] - 0.35
     current_center_y = lowerleft_coor[1] + 0.35
@@ -67,10 +79,10 @@ if __name__ == "__main__":
 
         current_center_x = current_center_x - 0.7
         current_center_y = lowerleft_coor[1] + 0.35
-        
+    
 
     'write into a region file'
-    f1 = open('../data/G222_bricks.reg', 'w')
+    f1 = open(datadir+'regions/all_bricks_gama.reg', 'w')
     f1.write('# Region file format: DS9 version 4.1\n')
     f1.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n')
     f1.write('fk5\n')
@@ -79,8 +91,8 @@ if __name__ == "__main__":
 
 
     'write into a file'
-    f2 = open('../data/dwfs_brick_centers.txt', 'w')
+    # f2 = open('../data/dwfs_brick_centers.txt', 'w')
+    f2 = open(datadir+'dwfs_brick_centers_gama.txt', 'w')
     for i in range(len(brick_centers)):
         f2.write(str(round(brick_centers[i][0],3))+'\t'+str(round(brick_centers[i][1],3))+'\n')
-
 
