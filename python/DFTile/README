@@ -1,0 +1,24 @@
+Last updated: June 20, 2021
+
+field_bounaries.py
+------------------
+This is the first step when generating tiles from the Dragonfly Wide Field Survey coadds.
+It loops over the directory that hosts the coadds (/Users/shanydanieli/projects/dwfs/data/df_coadds/) and calculates the boundary (corners) coordinates of each image.
+Then it writes the corners into a txt file (/Users/shanydanieli/projects/dwfs/data/) with the name fields_boundaries.txt.
+#
+#
+#
+tiles_centers.py
+----------------
+This script generates a list of 1 deg x 1 deg tiles spanning the GAMA field covered in the wide field survey.
+'dwfs_brick_centers_gama.txt' - a text file that includes the centers of the tiles  (RA and Dec in degrees). This file is also an input of the `tiling.py` script.
+'all_bricks_gama.reg' - a region file that includes all tiles in the GAMA field.
+
+In the very near future, I will also add the Stripe82 footprint.
+#
+#
+#
+tiling.py
+---------
+This script does the main tiling work. 
+It takes as an input
