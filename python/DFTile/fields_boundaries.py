@@ -15,13 +15,22 @@ from reproject.mosaicking import reproject_and_coadd
 from reproject.mosaicking import find_optimal_celestial_wcs
 
 
+def listdir_nohidden(path):
+    file_list = []
+    for f in os.listdir(path):
+        if not f.startswith('.'):
+            file_list.append(f)
+    return file_list
 
-datadir = '/Users/shanydanieli/projects/dwfs/data/raw/'
+
+datadir = '/Users/shanydanieli/projects/dwfs/data/df_coadds/'
+
 
 
 if __name__ == "__main__":
 
-    field_list = os.listdir(datadir)
+    # field_list = os.listdir(datadir)
+    field_list = listdir_nohidden(datadir)
 
     lowerleft_coor = []
     upperleft_coor = []
@@ -48,7 +57,7 @@ if __name__ == "__main__":
         upperright_coor.append(w.wcs_pix2world(upperright_pix[0],upperright_pix[1], 1))
 
     'write fields boundary coordinates into a file'
-    f = open('../data/fields_boundaries.txt', 'w')
+    f = open('/Users/shanydanieli/projects/dwfs/data/fields_boundaries.txt', 'w')
     f.write('# field name\n')
     f.write('# lower left x\n')
     f.write('# lower left y\n')
